@@ -1,63 +1,81 @@
 <?php
-
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Storage;
-use App\Http\Controllers\SubirControlador;
+use App\Models\Subido;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class SubirControlador extends Controller
 {
-    function img(Request $request, $file){
-        // dd($file)
-        if(file_exits(storage_path('app/private/carpeta/') . $file)){
-        return response()->file(storage_path('app/private/carpeta/') . $file);
+    public function index()
+    {
+        $subidos = Subido::all();
+        if ($subidos->isEmpty()) {
+            return redirect()->route('subir.create');
         }
-        abort(404);
+        return view('subir.index', compact('subidos'));
     }
 
-    function index () {
-        return view('subir.index');
+    public function viewAll()
+    {
+        $subidos = Subido::orderBy('nombre')->get();
+        return view('subir.viewAll', compact('subidos'));
     }
-    
-    function subir (Request $request) {
-        //dd($request->file('file'))
-        if($request->hasFile('file') && $request->file('file')->isvalid()){
-            $file = $request->file('file');
-            $nombreOriginal = $file->getClientOriginalName();
-            
-            $path = $file->storeAs('carpeta', 'nueva_' . $nombreOriginal);
-            // Equivalente al de arriba pero guarda en la privada
-            // $path = Storage::putFileAs('carpeta', $file, $nombreOriginal );
 
-            // $file->move('storage/carpeta',$nombreOriginal);
-            
-            echo $path;
+    public function viewOne($id)
+    {
+        $subido = Subido::findOrFail($id);
+        return view('subir.viewOne', compact('subido'));
+    }
 
-        }
+    public function create()
+    {
+        return view('subir.create');
     }
-    function subir2 (Request $request) {
-        //dd($request->file('file'))
-        if($request->hasFile('file') && $request->file('file')->isvalid()){
-            $file = $request->file('file');
-            // $nombreOriginal = $file->getClientOriginalName();
-            $path = $file->store('carpeta', 'public');
-            // $path= Storage::putFile('carpeta', $file);
-            // $file->move('storage/carpeta',$nombreOriginal);
-            echo $path;
 
+    public function store(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+            if ($request->hasFile('file') && $request->file('file')->isValid()) {
+                $file = $request->file('file');
+                $nombreOriginal = $file->getClientOriginalName();
+                $nombre = Carbon::now()->format('Y_m_d_H_i_s') . '_' . $nombreOriginal;
+                $path = $file->storeAs('/ejercicio', $nombre);
+
+                Subido::create([
+                    'nombre_original' => $nombreOriginal,
+                    'nombre' => $nombre,
+                ]);
+
+                return redirect()->route('subir.viewAll');
+            }
+
+            return back()->withErrors(['file' => 'Error al subir el archivo']);
         }
-    }
-    function subir1 (Request $request) {
-        //dd($request->file('file'))
-        if($request->hasFile('file') && $request->file('file')->isvalid()){
-            $file = $request->file('file');
-            $nombreOriginal = $file->getClientOriginalName();
-            $path = $file->move('storage/carpeta',$nombreOriginal);
-            echo $path;
+
+        public function manage()
+        {
+            $subidos = Subido::orderBy('nombre')->get();
+            return view('subir.manage', compact('subidos'));
         }
-    }
-    function view() {
-        return view('subir.view');
-    }
+        
+        public function destroy($id)
+        {
+            $subido = Subido::findOrFail($id);
+            $filePath = 'private/ejercicio/' . $subido->nombre;
+        
+            // Eliminar el archivo del almacenamiento
+            if (Storage::exists($filePath)) {
+                Storage::delete($filePath);
+            }
+        
+            // Eliminar el registro de la base de datos
+            $subido->delete();
+        
+            return redirect()->route('subir.manage')->with('success', 'Foto eliminada correctamente');
+        }
 }

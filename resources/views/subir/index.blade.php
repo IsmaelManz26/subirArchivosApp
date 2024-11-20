@@ -1,15 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subir archivos pdf e imagenes</title>
-</head>
-<body>
-    <form action="{{ url('subir') }}" enctype="multipart/form-data" method="post">
-        @csrf <!-- seguridad, consultas preparadas SQL -->
-        <input type="file" name="file">
-        <input type="submit">
-    </form>
-</body>
-</html>
+@extends('layouts.app')
+
+@section('content')
+    <h1>Fotos Subidas</h1>
+    @if($subidos->isEmpty())
+        <p>No hay fotos subidas. <a href="{{ route('subir.create') }}">Subir una foto</a></p>
+    @else
+        <ul>
+            @foreach($subidos as $subido)
+                <li><a href="{{ route('subir.viewOne', $subido->id) }}">{{ $subido->nombre_original }}</a></li>
+            @endforeach
+        </ul>
+    @endif
+@endsection
