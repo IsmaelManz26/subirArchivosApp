@@ -26,6 +26,12 @@ class SubirControlador extends Controller
     public function viewOne($id)
     {
         $subido = Subido::findOrFail($id);
+        $filePath = storage_path('app/private/ejercicio/' . $subido->nombre);
+    
+        if (!file_exists($filePath)) {
+            return back()->withErrors(['file' => 'El archivo no existe en el almacenamiento']);
+        }
+    
         return view('subir.viewOne', compact('subido'));
     }
 
@@ -39,23 +45,23 @@ class SubirControlador extends Controller
         $request->validate([
             'file' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-
-            if ($request->hasFile('file') && $request->file('file')->isValid()) {
-                $file = $request->file('file');
-                $nombreOriginal = $file->getClientOriginalName();
-                $nombre = Carbon::now()->format('Y_m_d_H_i_s') . '_' . $nombreOriginal;
-                $path = $file->storeAs('/ejercicio', $nombre);
-
-                Subido::create([
-                    'nombre_original' => $nombreOriginal,
-                    'nombre' => $nombre,
-                ]);
-
-                return redirect()->route('subir.viewAll');
-            }
-
-            return back()->withErrors(['file' => 'Error al subir el archivo']);
+    
+        if ($request->hasFile('file') && $request->file('file')->isValid()) {
+            $file = $request->file('file');
+            $nombreOriginal = $file->getClientOriginalName();
+            $nombre = Carbon::now()->format('Y_m_d_H_i_s') . '_' . $nombreOriginal;
+            $path = $file->storeAs('private/ejercicio', $nombre);
+    
+            Subido::create([
+                'nombre_original' => $nombreOriginal,
+                'nombre' => $nombre,
+            ]);
+    
+            return redirect()->route('subir.viewAll');
         }
+    
+        return back()->withErrors(['file' => 'Error al subir el archivo']);
+    }
 
         public function manage()
         {
