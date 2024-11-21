@@ -7,7 +7,7 @@
         @foreach($subidos as $subido)
             <li class="list-group-item d-flex justify-content-between align-items-center">
                 <a href="{{ route('subir.viewOne', $subido->id) }}">{{ $subido->nombre_original }}</a>
-                <img src="{{ asset('storage/private/ejercicio/' . $subido->nombre) }}" alt="{{ $subido->nombre_original }}" width="50">
+                <img src="{{ url('image/' . $subido->id) }}" alt="{{ $subido->nombre_original }}" width="50">
             </li>
         @endforeach
     </ul>

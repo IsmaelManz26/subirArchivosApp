@@ -17,6 +17,7 @@ class SubirControlador extends Controller
         return view('subir.index', compact('subidos'));
     }
 
+
     public function viewAll()
     {
         $subidos = Subido::orderBy('nombre')->get();
